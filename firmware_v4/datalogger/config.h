@@ -25,7 +25,7 @@
 #define USE_GPS 1
 
 // enable(1)/disable(0) cellular module (SIM5360) internal GPS
-#define USE_CELL_GPS 1
+#define USE_CELL_GPS 0
 
 // GPS parameters
 #define GPS_SERIAL_BAUDRATE 115200L
