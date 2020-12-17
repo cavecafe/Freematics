@@ -31,6 +31,8 @@ extern char serverKey[];
 // callback from the web server whenever it recevies UDP data
 //////////////////////////////////////////////////////////////////////////
 
+// (tk) original
+/*
 int verifyChecksum(char* data)
 {
 	uint8_t sum = 0;
@@ -54,6 +56,30 @@ int addChecksump(char* data)
 	s += sprintf(s, "*%X", sum);
 	return (int)(s - data);
 }
+*/
+int verifyChecksum(char* data)
+{
+	uint16_t sum = 0;
+	char *p = strrchr(data, '*');
+	if (!p) return 0;
+	for (char *s = data; s < p; s++) sum += ((uint16_t) *s);
+	if (hex2uint8(p + 1) == (sum % 0xff)) {
+		*p = 0; // strip checksum
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+int addChecksump(char* data)
+{
+	uint16_t sum = 0;
+	char *s;
+	for (s = data; *s; s++) sum += ((uint16_t) *s);
+	s += sprintf(s, "*%02X", (sum % 0xff));
+	return (int)(s - data);
+}
+
 
 int incomingUDPCallback(void* _hp)
 {
@@ -75,7 +101,10 @@ int incomingUDPCallback(void* _hp)
 
 	buf[recv] = 0;
 	hostaddr = inet_ntoa(cliaddr.sin_addr);
-	fprintf(stderr, "%u bytes from %s | ", recv, hostaddr);
+
+	// (tk) for saving data only
+	// fprintf(stderr, "%u bytes from %s \n%s\n", recv, hostaddr, buf);
+	fprintf(stderr, "%s\n", buf);
 
 	// validate checksum
 	if (!verifyChecksum(buf)) {
@@ -272,8 +301,12 @@ int incomingUDPCallback(void* _hp)
 	}
 	// send UDP response
 	len = addChecksump(buf);
-	if (sendto(hp->udpSocket, buf, len, 0, (struct sockaddr *)&cliaddr, socklen) == len)
-		fprintf(stderr, "Reply sent:%s\n", buf);
+	if (sendto(hp->udpSocket, buf, len, 0, (struct sockaddr *)&cliaddr, socklen) == len) {
+		// (tk) for saving data only
+		// fprintf(stderr, "Reply sent:%s\n", buf);
+		// fprintf(stderr, "%s\n", buf);
+	}
+		
 	else
 		fprintf(stderr, "Reply unsent\n");
 
