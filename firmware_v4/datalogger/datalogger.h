@@ -6,7 +6,7 @@
 *************************************************************************/
 
 #if ENABLE_DATA_LOG
-//using namespace SDLib;
+// using namespace SDLib;
 File sdfile;
 #endif
 

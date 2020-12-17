@@ -103,6 +103,8 @@ OBD obd;
 *******************************************************************************/
 bool verifyChecksum(char* data)
 {
+  // (tk) checksum ==> after '*'
+
   uint8_t sum = 0;
   char *s = strrchr(data, '*');
   if (!s) return false;
@@ -114,6 +116,26 @@ bool verifyChecksum(char* data)
   return false;
 }
 
+void print(char* msg) {
+  //Serial.print(msg);
+}
+
+void printNameValue(char* name, char* value) {
+  //Serial.print(name);
+  //Serial.println(value);
+}
+
+// (tk) added
+char* substr(char *s, int start, int end)
+{
+       int size = end - start + 2; // 1 for the inclusive limits and another 1 for the \0
+       char * r = (char*)malloc(size);
+       strncpy(r,s+start, size-1);
+       r[size-1]=0;
+       return r;
+}
+
+
 bool notify(byte event)
 {
   cache.header(devid);
@@ -123,8 +145,9 @@ bool notify(byte event)
     if (state.check(STATE_OBD_READY)) {
       char vin[128];
       if (obd.getVIN(vin, sizeof(vin))) {
-        Serial.print(F("VIN:"));
-        Serial.println(vin);
+        
+        //printNameValue(F("VIN:"), vin);
+
         cache.dispatch(buf, snprintf_P(buf, sizeof(buf), PSTR("VIN=%s"), vin));
       }
     }
@@ -132,30 +155,40 @@ bool notify(byte event)
   }
   int rssi = net.getSignal();
   if (rssi) {
-    Serial.print(F("RSSI:"));
-    Serial.print(rssi);
-    Serial.println(F("dBm"));
+    
+    //printNameValue(F("RSSI:"), rssi);
+    
     cache.dispatch(buf, snprintf_P(buf, sizeof(buf), PSTR("SSI=%d"), rssi));
   }
   cache.dispatch(buf, snprintf_P(buf, sizeof(buf), PSTR("EV=%X"), (unsigned int)event));
   cache.dispatch(buf, snprintf_P(buf, sizeof(buf), PSTR("TS=%lu"), millis()));
   cache.tailer();
 
-  Serial.print(F("SERVER.."));
+  Serial.print(F("--SERVER.."));
+
   for (byte attempts = 0; attempts < 3; attempts++) {
-    Serial.print('.');
+    Serial.print("--.");
+
+    // (tk) added
+    char* temp = substr(cache.buffer(), 0, cache.length());
+    Serial.print(temp);
+    free(temp);
+    
     if (!net.send(cache.buffer(), cache.length())) {
       delay(1000);
       continue;
     }
     if (event == EVENT_ACK) {
-      Serial.println(F("ACK"));
+      Serial.println(F("--ACK"));
       return true; // no reply for ACK
     }
     // receive reply
     delay(1000);
     int len;
     char *data = net.receive(&len);
+
+    // (tk) 
+
     if (!data) {
       // no reply yet
       
@@ -175,7 +208,9 @@ bool notify(byte event)
     lastSyncTime = millis();
     connErrors = 0;
     // success
-    Serial.println(F("OK"));
+  
+    Serial.println(F("--OK"));
+
     return true;
   }
   Serial.println(F("NO"));
@@ -185,9 +220,9 @@ bool notify(byte event)
 bool login()
 {
   // connect to telematics server
-  for (byte attempts = 0; attempts < 3; attempts++) {
+  for (byte attempts = 0; attempts < 5; attempts++) {
     if (!net.open(SERVER_HOST, SERVER_PORT)) {
-      Serial.println(F("NO NET"));
+      Serial.println(F("--NO NET"));
       delay(1000);
       continue;
     }
@@ -207,16 +242,24 @@ bool transmit()
 {
   bool success = false;
   unsigned long elapsed = (millis() - sessionStartTime) / 1000;
+  
   Serial.print(elapsed / 60);
   Serial.print(':');
   Serial.print(elapsed % 60);
   Serial.print(' ');
   // transmit data
+
+  // (tk) added
+  //char* temp = substr(cache.buffer(), 0, cache.length());
+  //Serial.print(temp);
+  //free(temp);
+
   if (net.send(cache.buffer(), cache.length())) {
     connErrors = 0;
     txCount++;
+
     // output some stats
-    Serial.print('#');
+    Serial.print("--#");
     Serial.print(txCount);
     Serial.print(' ');
     Serial.print(cache.length());
@@ -224,7 +267,7 @@ bool transmit()
     success = true;
   } else {
     connErrors++;
-    Serial.print(F("NET ERR:"));
+    Serial.print(F("--NET ERR:"));
     Serial.println(connErrors);
   }
   return success;
@@ -297,7 +340,7 @@ void processGPS()
         cache.log(PID_GPS_SPEED, kph);
         cache.log(PID_GPS_HEADING, gd.heading / 100);
       }
-      Serial.print("[GPS] ");
+      Serial.print("--[GPS] ");
       Serial.print(gd.lat);
       Serial.print(' ');
       Serial.print(gd.lng);
@@ -329,7 +372,7 @@ void processLocation()
     cache.log(PID_GPS_SPEED, kph);
     if (kph >= 1) lastMotionTime = millis();
     cache.log(PID_GPS_HEADING, gd->heading);
-    Serial.print("[GPS] ");
+    Serial.print("--[GPS] ");
     Serial.print(gd->lat);
     Serial.print(' ');
     Serial.print(gd->lng);
@@ -413,7 +456,7 @@ bool initialize()
 
 #if MEMS_MODE
   if (!state.check(STATE_MEMS_READY)) {
-    Serial.print(F("MEMS:"));
+    Serial.print(F("--MEMS:"));
     if (mems.begin()) {
       state.set(STATE_MEMS_READY);
       Serial.println(F("OK"));
@@ -427,7 +470,7 @@ bool initialize()
   
   // initialize OBD communication
   if (!state.check(STATE_OBD_READY)) {
-    Serial.print(F("OBD:"));
+    Serial.print(F("--OBD:"));
     if (!obd.init()) {
       Serial.println(F("NO"));
       if (state.check(STATE_OBD_FOUND)) return false;
@@ -441,7 +484,7 @@ bool initialize()
 #if ENABLE_GPS
   // start serial communication with GPS receiver
   if (!state.check(STATE_GPS_READY)) {
-    Serial.print(F("GPS:"));
+    Serial.print(F("--GPS:"));
     if (sys.gpsInit(GPS_SERIAL_BAUDRATE)) {
       state.set(STATE_GPS_READY);
       Serial.println(F("OK"));
@@ -451,14 +494,17 @@ bool initialize()
   }
 #endif
 
+  Serial.print("--NET_DEVICE:");
+  Serial.println(NET_DEVICE);
+
   // initialize network module
   if (!state.check(STATE_NET_READY)) {
-    Serial.print(F("CELL:"));
+    Serial.print(F("--CELL:"));
     if (net.begin(&sys)) {
-      Serial.println(F("OK"));
+      Serial.println(F("--OK"));
       state.set(STATE_NET_READY);
     } else {
-      Serial.println(F("NO"));
+      Serial.println(F("--NO"));
       return false;
     }
   }
@@ -473,6 +519,7 @@ bool initialize()
     if (q) *q = 0;
     strncpy(IMEI, p + 6, sizeof(IMEI) - 1);
   }
+  Serial.print("--");
   Serial.println(strstr_P(info, PSTR("Rev")));
   // generate device ID from IMEI
   uint32_t seed = atol(IMEI + 5);
@@ -494,12 +541,13 @@ bool initialize()
   devid[7] = 0;
 #endif
 
+
   Serial.print(F("DEVID:"));
   Serial.println(devid);
 
 #if NET_DEVICE == NET_WIFI
-  for (byte attempts = 0; attempts < 3; attempts++) {
-    Serial.print(F("WIFI(SSID:"));
+  for (byte attempts = 0; attempts < 5; attempts++) {
+    Serial.print(F("--WIFI(SSID:"));
     Serial.print(WIFI_SSID);
     Serial.print(F("):"));
     if (net.setup(WIFI_SSID, WIFI_PASSWORD)) {
@@ -514,7 +562,7 @@ bool initialize()
     return false;
   }
 #else
-  Serial.print("SIM:");
+  Serial.print("--SIM:");
   bool hasSIM = net.checkSIM();
   if (hasSIM) {
     Serial.println(F("OK"));
@@ -522,24 +570,25 @@ bool initialize()
     Serial.println(F("NO"));
   }
 
-  Serial.print(F("NET.."));
+  Serial.print(F("--NET.."));
+
   if (net.setup(CELL_APN, hasSIM ? 30000 : 1000, !state.check(STATE_GPS_READY))) {
     String op = net.getOperatorName();
     if (op.length()) {
       Serial.println(op);
     } else {
-      Serial.println(F("OK"));
+      Serial.println(F("--OK"));
     }
     state.set(STATE_SERVER_CONNECTED);
     login();
   } else {
-    Serial.println(F("NO"));
+    Serial.println(F("--NO"));
     if (hasSIM) return false;
   }
 
   if (!state.check(STATE_GPS_READY)) {
     net.startGPS();
-    Serial.println(F("GPS:CELL"));
+    Serial.println(F("--GPS:CELL"));
   }
 #endif
 
@@ -550,7 +599,7 @@ bool initialize()
 #endif
 
 #if 0
-  Serial.print(F("IP:"));
+  Serial.print(F("--IP:"));
   String ip = net.getIP();
   if (ip.length()) {
     Serial.println(ip);
@@ -569,7 +618,7 @@ bool initialize()
 void shutDownNet()
 {
   //obd.checkConn();
-  Serial.print(F("CELL:"));
+  Serial.print(F("--CELL:"));
   net.close();
   net.stopGPS();
   net.end();
@@ -643,7 +692,7 @@ void process()
   }
   // when battery voltage gets low, enter standby mode
   if (volts >= 6 && volts < BATTERY_LOW_VOLTAGE) {
-    Serial.print(F("LOW BATT:"));
+    Serial.print(F("--LOW BATT:"));
     Serial.println(volts, 1);
     state.clear(STATE_WORKING);
   }
@@ -674,7 +723,7 @@ void standby()
   unsigned long t = millis();
 #if ENABLE_GPS
   if (state.check(STATE_GPS_READY)) {
-    Serial.println(F("GPS OFF"));
+    Serial.println(F("--GPS OFF"));
     sys.gpsInit(0); // turn off GPS power
   }
 #endif
@@ -685,13 +734,14 @@ void standby()
 #if MEMS_MODE
     calibrateMEMS();
 #endif
-    Serial.println(F("STANDBY"));
+    Serial.println(F("--STANDBY"));
     int ret = 0;
     if (state.check(STATE_MEMS_READY)) {
       ret = waitMotion(1000L * PING_BACK_INTERVAL - (millis() - t));
     } else {
       do {
         float volts = obd.getVoltage();
+        Serial.print("--");
         Serial.println(volts, 1);
         if (volts >= CHARGING_VOLTAGE) {
           ret = 1;
@@ -700,7 +750,7 @@ void standby()
         delay(5000);
       } while (millis() - t < 1000L * PING_BACK_INTERVAL);
     }
-    Serial.println(F("WAKEUP"));
+    Serial.println(F("--WAKEUP"));
     t = millis();
     obd.getVersion();
     Serial.println();
@@ -708,14 +758,14 @@ void standby()
     // check battery voltage
     float volts = obd.getVoltage();
     if (volts >= 6 && volts < BATTERY_LOW_VOLTAGE) {
-      Serial.print(F("LOW BATT:"));
+      Serial.print(F("--LOW BATT:"));
       Serial.println(volts, 1);
       // sleep 120 seconds
       for (byte n = 0; n < 15; n++) sleep(WDTO_8S);
       continue;
     }
     // start ping
-    Serial.print(F("Ping..."));
+    Serial.print(F("--Ping..."));
     net.begin(&sys, true);
     cache.header(devid);
     cache.timestamp(millis());
@@ -728,16 +778,20 @@ void standby()
     if (!net.begin(&sys) || !net.setup(CELL_APN, 15000, false))
 #endif
     {
-      Serial.println(F("NO"));
+      Serial.println(F("--NO"));
       continue;
     }
+    Serial.print("--");
     Serial.println(net.getIP());
     state.set(STATE_NET_READY);
-    if (ping()) {
+    
+    // (tk) removed
+    //if (ping()) {
       state.set(STATE_SERVER_CONNECTED);
       // ping back data
       transmit();
-    }
+    //}
+
   }
 #if RESET_AFTER_WAKEUP
   delay(100);
@@ -754,10 +808,15 @@ void recvTasks(int timeout)
   if (state.check(STATE_NET_READY)) {
      // check incoming datagram
     int len = 0;
+
+    // (tk) net.receive
+
     char *data = net.receive(&len, timeout);
     if (data) {
       data[len] = 0;
-      Serial.print(F("[IN]"));
+
+      // (tk) TODO what about [IN] ??
+      Serial.print(F("--[IN]"));
       Serial.println(data);
       if (!verifyChecksum(data)) {
         return;
@@ -796,6 +855,7 @@ void loop()
 
   if (!state.check(STATE_WORKING)) {
     if (state.check(STATE_SERVER_CONNECTED)) {
+      Serial.print("--");
       Serial.println(F("LOGOUT"));
       notify(EVENT_LOGOUT);
       state.clear(STATE_SERVER_CONNECTED);
@@ -812,13 +872,13 @@ void loop()
 #if SERVER_SYNC_INTERVAL
   // check server sync signal to ensure connection consistency
   if (state.check(STATE_SERVER_CONNECTED) && millis() - lastSyncTime > 1000L * SERVER_SYNC_INTERVAL) {
-    Serial.println(F("NO SYNC"));
+    Serial.println(F("--NO SYNC"));
     connErrors = MAX_CONN_ERRORS;
   }
 #endif
   // deal with network errors
   if (connErrors >= MAX_CONN_ERRORS) {
-    Serial.println(F("NET ERR"));
+    Serial.println(F("--NET ERR"));
     state.clear(STATE_SERVER_CONNECTED);
     shutDownNet();
     initialize();
@@ -828,9 +888,12 @@ void loop()
   // collect data
   process();
 
-  Serial.print(F("[OUT]"));
-  Serial.println(cache.buffer()); 
-
+  // (tk) removed
+  // Serial.print(F("[OUT]"));
+  if (cache.samples() > 0) {
+    Serial.println(cache.buffer()); 
+  }
+  
   // transmit data
   if (state.check(STATE_SERVER_CONNECTED)) {
     if (cache.samples() > 0) {
@@ -841,12 +904,12 @@ void loop()
   // re-try OBD connection if it is not ready
   if (!state.check(STATE_OBD_READY)) {
     if (millis() - lastOBDTry > 1000L * obdRetryInterval) {
-      Serial.print(F("OBD:"));
+      Serial.print(F("--OBD:"));
       if (obd.testPID(PID_SPEED)) {
         state.set(STATE_OBD_READY);
-        Serial.println(F("OK"));
+        Serial.println(F("--OK"));
       } else {
-        Serial.println(F("NO"));
+        Serial.println(F("--NO"));
       }
       lastOBDTry = millis();
       if (obdRetryInterval < MAX_OBD_RETRY_INTERVAL) obdRetryInterval += 10;
