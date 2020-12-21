@@ -1,0 +1,3 @@
+server/teleserver/bin/
+*.user
+server/teleserver/.vs/teleserver/v16/
