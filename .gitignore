@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 server/teleserver/bin/
 *.user
 server/teleserver/.vs/teleserver/v16/
-=======
 firmware_v4/datalogger/.vscode
 firmware_v4/telelogger/.vscode
 firmware_v5
 *.o
 server/teleserver/data
->>>>>>> 7d0766d20f021e63c14365a597e7c59665c52e26
