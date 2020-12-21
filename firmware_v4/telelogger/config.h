@@ -8,6 +8,7 @@
 #define NET_SIM800 2
 #define NET_SIM5360 3
 
+
 /**************************************
 * OBD-II configurations
 **************************************/
@@ -20,16 +21,24 @@
 * Networking configurations
 **************************************/
 #ifndef NET_DEVICE
-// change the following line to change network device
+
+// (tk)
+// change the following line to change network device (Freematics ONE No WiFi)
 #define NET_DEVICE NET_SIM5360
+// #define NET_DEVICE NET_WIFI
+
 // WIFI settings
-#define WIFI_SSID "HOTSPOT"
-#define WIFI_PASSWORD "PASSWORD"
+//#define WIFI_SSID "SSID"
+//#define WIFI_PASSWORD "password"
 // APN settings for cellular network (if required)
 #define CELL_APN "hologram"
 // Freematics Hub server settings
-#define SERVER_HOST "hub.freematics.com"
+
+// (tk) changed
+#define SERVER_HOST "smartstore.ca"
 #define SERVER_PORT 8081
+//#define SERVER_HOST "hub.freematics.com"
+//#define SERVER_PORT 8081
 #endif
 
 #define DEFAULT_DEVID "DEFAULT"
@@ -61,7 +70,7 @@
 **************************************/
 #ifndef ENABLE_GPS
 // change the following line to enable (1)/disable (0) GPS
-#define ENABLE_GPS 0
+#define ENABLE_GPS 1
 #endif
 #define GPS_SERIAL_BAUDRATE 115200L
 

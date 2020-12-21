@@ -31,7 +31,11 @@
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <SPIFFS.h>
-#include <apps/sntp/sntp.h>
+
+// (tk)
+// #include <apps/sntp/sntp.h>  // this will be deprecated 
+#include <lwip/apps/sntp.h>
+
 #include <esp_spi_flash.h>
 #include <esp_err.h>
 #include <httpd.h>

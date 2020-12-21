@@ -89,7 +89,7 @@ public:
     ONE():state(0) {}
     void setup()
     {
-      Serial.print("OBD:");
+      Serial.print("OBD::");
       if (init()) {
         Serial.println("OK");
         state |= STATE_OBD_READY;
@@ -97,7 +97,7 @@ public:
         Serial.println("NO");
       }
 #if USE_GPS
-      Serial.print("GPS:");
+      Serial.print("GPS::");
       if (gpsInit(GPS_SERIAL_BAUDRATE)) {
         state |= STATE_GPS_FOUND;
         Serial.println("OK");
@@ -107,7 +107,7 @@ public:
 #endif
 #if USE_CELL_GPS
       if (!(state & STATE_GPS_FOUND)) {
-        Serial.print("CELL GPS:");
+        Serial.print("CELL GPS::");
         if (cellInit()) {
           Serial.println("OK");
           state |= STATE_CELL_GPS_FOUND;
@@ -134,7 +134,7 @@ public:
       if (state & STATE_OBD_READY) {
         char buffer[128];
         if (getVIN(buffer, sizeof(buffer))) {
-          Serial.print("VIN:");
+          Serial.print("VIN::");
           Serial.println(buffer);
         }
       }
@@ -357,7 +357,7 @@ void setup()
     Serial.println(ver);
 
 #if USE_MEMS
-    Serial.print("MEMS:");
+    Serial.print("MEMS::");
     if (mems.begin()) {
       one.state |= STATE_MEMS_READY;
       Serial.println("OK");

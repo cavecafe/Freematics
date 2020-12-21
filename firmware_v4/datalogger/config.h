@@ -9,7 +9,7 @@
 #define ENABLE_DATA_LOG 1
 
 // enable(1)/disable(0) data streaming
-#define ENABLE_DATA_OUT 0
+#define ENABLE_DATA_OUT 1 // (tk) 0
 
 // file size limit
 #define MAX_DATA_FILE_SIZE 1024 /* KB */
@@ -22,10 +22,13 @@
 #define USE_MEMS 1
 
 // enable(1)/disable(0) external GPS receiver
+// (tk) for indoor test (0), real (1)
+//#define USE_GPS 0
 #define USE_GPS 1
 
 // enable(1)/disable(0) cellular module (SIM5360) internal GPS
-#define USE_CELL_GPS 1
+//#define USE_CELL_GPS 0
+#define USE_CELL_GPS 1  // (tk) modified
 
 // GPS parameters
 #define GPS_SERIAL_BAUDRATE 115200L

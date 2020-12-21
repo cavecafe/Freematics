@@ -424,7 +424,8 @@ int processPayload(char* payload, CHANNEL_DATA* pld, uint16_t eventID)
 
 	pld->recvCount++;
 
-	printf("[%u] #%u %u bytes | Samples:%u | Device Tick:%u\n", pld->id, pld->recvCount, pld->dataReceived, count, pld->deviceTick);
+	// (tk) for saving data only
+	// printf("[%u] #%u %u bytes | Samples:%u | Device Tick:%u\n", pld->id, pld->recvCount, pld->dataReceived, count, pld->deviceTick);
 	return count;
 }
 

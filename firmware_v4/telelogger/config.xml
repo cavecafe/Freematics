@@ -7,8 +7,12 @@
     <option name="SIM5360 (WCDMA)" const="NET_DEVICE=NET_SIM5360" default="true"/>
   </define>
   <define name="Cellular Network APN" const="CELL_APN" type="string" default="hologram" />
-  <define name="Use External GPS" type="bool" const="ENABLE_GPS"/>
-  <define name="Server Host" const="SERVER_HOST" type="string" default="hub.freematics.com"/>
+  <define name="Use External GPS" type="bool" const="ENABLE_GPS" default="true"/>
+
+  <!-- (tk) -->
+  <define name="Server Host" const="SERVER_HOST" type="string" default="smartstore.ca"/>
   <define name="Server Port" const="SERVER_PORT" type="number" default="8081"/>
+  <!-- <define name="Server Host" const="SERVER_HOST" type="string" default="hub.freematics.com"/>
+  <define name="Server Port" const="SERVER_PORT" type="number" default="8081"/> -->
 </target>
 </config>
